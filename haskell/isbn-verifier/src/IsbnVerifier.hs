@@ -1,39 +1,41 @@
 module IsbnVerifier (isbn) where
 
 import Data.Char (digitToInt)
+import Control.Arrow ((>>>))
 
 isbn :: String -> Bool
-isbn s = verifyLength i && verifyValidCharacters i && verifyChecksum i
-            where i = removeDashes s
+isbn s = verifyLength i && verifyDigits i && verifyChecksum i
+            where
+                i = stringToIntArray s
 
 
-verifyLength :: String -> Bool
-verifyLength s = length s == 10
+verifyLength :: [a] -> Bool
+verifyLength = length >>> (== 10)
 
 
-verifyValidCharacters :: String -> Bool
-verifyValidCharacters s = all (flip elem (['0'..'9'])) allButLastChar && elem lastChar (['0'..'9'] ++ ['X'])
-                            where
-                                allButLastChar = reverse $ tail $ reverse s
-                                lastChar = last s
-
-
-verifyChecksum :: String -> Bool
-verifyChecksum s = (checksum $ toIntArray s) `mod` 11 == 0
-
-
-removeDashes :: String -> String
-removeDashes = filter (/= '-')
-
-
-toIntArray :: String -> [Int]
-toIntArray s = map toInt s
+verifyDigits :: [Int] -> Bool
+verifyDigits s = allButLastDigit && lastDigit
                 where
-                    toInt c = case c of
-                                'X' -> 10
-                                c -> digitToInt c
+                    allButLastDigit = all (< 10) $ init s
+                    lastDigit = elem (last s) [0..10]
+
+
+verifyChecksum :: [Int] -> Bool
+verifyChecksum =  checksum >>> (== 0)
+
+
+stringToIntArray :: String -> [Int]
+stringToIntArray = concat . map charToInt
+
+
+charToInt :: Char -> [Int]
+charToInt c = case c of
+                'X' -> [10]
+                c | elem c ['0'..'9'] -> [digitToInt c]
+                  | otherwise -> []
+
 
 checksum :: [Int] -> Int
-checksum is = sum $ map (\(a, b) -> a * b) (zip digits is)
+checksum is = (sum $ map (\(a, b) -> a * b) (zip digits is)) `mod` 11
                 where
                     digits = reverse [1..length is]
