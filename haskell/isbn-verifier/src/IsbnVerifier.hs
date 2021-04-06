@@ -29,10 +29,9 @@ stringToIntArray = concat . map charToInt
 
 
 charToInt :: Char -> [Int]
-charToInt c = case c of
-                'X' -> [10]
-                c | elem c ['0'..'9'] -> [digitToInt c]
-                  | otherwise -> []
+charToInt 'X' = [10]
+charToInt c | elem c ['0'..'9'] = [digitToInt c]
+            | otherwise = []
 
 
 checksum :: [Int] -> Int
